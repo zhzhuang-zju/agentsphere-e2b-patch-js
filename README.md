@@ -2,11 +2,12 @@
 
 给官方 [E2B JS SDK](https://www.npmjs.com/package/e2b) 打补丁，目前的 patch 内容有：
 
-- 让访问 envd（端口 **49983**）的请求自动带上 create sandbox 返回的 `traffic_access_token`。
+- 为访问 envd（端口 **49983**）的请求自动带上 e2b-traffic-access-token header，值来自 create sandbox 或者 connect sandbox 时返回的 `traffic_access_token`。
+- 为访问 envd（端口 **49983**）之外的其他数据面请求提供帮助函数，方便设置 e2b-traffic-access-token header
 
 ## 安装
 
-先分发 patch 文件, 后续再考虑发布到 npm。
+说明：先直接分发 patch 文件, 后续再考虑发布到 npm。
 
 为了方便下载，打包好的 patch 文件暂时存放在 publish 目录下。安装前请先下载 agentsphere-e2b-patch-xxx.tgz 文件到本地。
 
