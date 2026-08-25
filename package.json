@@ -1,0 +1,46 @@
+{
+  "name": "agentsphere-e2b-patch",
+  "version": "0.1.0",
+  "description": "Patch the official E2B JS SDK so envd (port 49983) requests send e2b-traffic-access-token.",
+  "license": "MIT",
+  "author": "Agentsphere",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "e2b": ">=2.0.0"
+  },
+  "devDependencies": {
+    "e2b": "^2.45.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "e2b",
+    "agentsphere",
+    "sandbox"
+  ],
+  "dependencies": {
+    "agentsphere-e2b-patch": "file:publish/agentsphere-e2b-patch-0.1.0.tgz"
+  }
+}
