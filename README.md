@@ -6,10 +6,14 @@
 
 ## 安装
 
-先直接分发 patch 文件, 打包为，后续再考虑发布到 npm。使用 npm 命令安装：
+先分发 patch 文件, 后续再考虑发布到 npm。
+
+为了方便下载，打包好的 patch 文件暂时存放在 publish 目录下。安装前请先下载 agentsphere-e2b-patch-xxx.tgz 文件到本地。
+
+使用 npm 命令安装：
 
 ```bash
-# 先安装 e2b 依赖
+# 先安装 e2b：agentsphere-e2b-patch 只是 patch，官方 SDK 是必须的
 npm install e2b
 # 在安装 agentsphere 的 e2b patch, 注意修改为实际版本
 npm install ./agentsphere-e2b-patch-0.1.0.tgz
@@ -17,7 +21,9 @@ npm install ./agentsphere-e2b-patch-0.1.0.tgz
 
 ## 使用
 
-使用时，必须修改 import，Sandbox 要从 agentsphere 的 patch 中 import，如：
+使用时，必须修改 Sandbox 和 E2B 的 import！必须修改 Sandbox 和 E2B 的 import！必须修改 Sandbox 和 E2B 的 import！
+
+Sandbox 要从 agentsphere 的 patch 中 import ：
 
 ```ts
 import { Sandbox } from 'agentsphere-e2b-patch'
