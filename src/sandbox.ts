@@ -1,4 +1,4 @@
-import { Sandbox as OrigSandbox } from 'e2b'
+import { Sandbox as OrigSandbox } from 'e2b/dist/index.mjs'
 
 import { install } from './install.js'
 import { registerTrafficAccessToken, TRAFFIC_HEADER } from './tokens.js'

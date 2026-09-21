@@ -3,12 +3,67 @@ import { injectTrafficAccessToken, SANDBOX_ID_HEADER, TRAFFIC_HEADER } from './t
 const FLAG = '_agentsphere_e2b_patched'
 
 type HeadersConstructor = typeof Headers
+type RequestConstructor = typeof Request
 type FetchFn = typeof fetch
 
 let originalHeaders: HeadersConstructor | undefined
+let originalRequest: RequestConstructor | undefined
 let originalFetch: FetchFn | undefined
 let origSet: typeof Headers.prototype.set | undefined
 let origAppend: typeof Headers.prototype.append | undefined
+
+const templateCreateExtensions = new Map<
+  string,
+  { arch?: string; gatewayID?: string }
+>()
+let nextBuildMarker = 0
+
+export function registerTemplateCreateExtensions(extensions: {
+  arch?: string
+  gatewayID?: string
+}): string | undefined {
+  if (extensions.arch === undefined && extensions.gatewayID === undefined) {
+    return undefined
+  }
+  const marker = `${Date.now()}-${nextBuildMarker++}`
+  templateCreateExtensions.set(marker, extensions)
+  return marker
+}
+
+export function unregisterTemplateCreateExtensions(marker?: string): void {
+  if (marker) {
+    templateCreateExtensions.delete(marker)
+  }
+}
+
+function patchTemplateCreateRequest(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): RequestInit | undefined {
+  if (!init?.headers || typeof init.body !== 'string') {
+    return init
+  }
+
+  const url = typeof input === 'string' || input instanceof URL ? input : input.url
+  const pathname = new URL(url, 'http://localhost').pathname
+  if (init.method?.toUpperCase() !== 'POST' || pathname !== '/v3/templates') {
+    return init
+  }
+
+  const headers = new Headers(init.headers)
+  const marker = headers.get('x-agentsphere-template-build')
+  const extensions = marker && templateCreateExtensions.get(marker)
+  if (!extensions) {
+    return init
+  }
+
+  headers.delete('x-agentsphere-template-build')
+  return {
+    ...init,
+    headers,
+    body: JSON.stringify({ ...JSON.parse(init.body), ...extensions }),
+  }
+}
 
 function isSandboxIdHeader(name: string): boolean {
   return name.toLowerCase() === SANDBOX_ID_HEADER
@@ -82,6 +137,16 @@ export function install(): void {
     }
   }
 
+  if (typeof Request !== 'undefined' && !originalRequest) {
+    originalRequest = Request
+    class PatchedRequest extends originalRequest {
+      constructor(input: RequestInfo | URL, init?: RequestInit) {
+        super(input, patchTemplateCreateRequest(input, init))
+      }
+    }
+    globalThis.Request = PatchedRequest as RequestConstructor
+  }
+
   if (typeof fetch === 'function' && !originalFetch) {
     originalFetch = globalThis.fetch.bind(globalThis)
     globalThis.fetch = wrapFetch(originalFetch)
@@ -93,6 +158,10 @@ export function uninstall(): void {
     restoreHeadersPrototype(originalHeaders)
     globalThis.Headers = originalHeaders
     originalHeaders = undefined
+  }
+  if (originalRequest) {
+    globalThis.Request = originalRequest
+    originalRequest = undefined
   }
   if (originalFetch) {
     globalThis.fetch = originalFetch

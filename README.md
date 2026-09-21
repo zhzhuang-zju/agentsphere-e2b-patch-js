@@ -4,6 +4,7 @@
 
 - 为访问 envd（端口 **49983**）的请求自动带上 e2b-traffic-access-token header，值来自 create sandbox 或者 connect sandbox 时返回的 `traffic_access_token`。
 - 为访问 envd（端口 **49983**）之外的其他数据面请求提供帮助函数，方便设置 e2b-traffic-access-token header
+- 为 Template build 增加 Agentsphere 的网络、调用、探针、可观测性和存储配置字段
 
 ## 安装
 
@@ -16,15 +17,17 @@
 ```bash
 # 先安装 e2b：agentsphere-e2b-patch 只是 patch，官方 SDK 是必须的
 npm install e2b
-# 在安装 agentsphere 的 e2b patch, 注意修改为实际版本
-npm install ./agentsphere-e2b-patch-0.1.0.tgz
+# 再安装 agentsphere 的 e2b patch，注意修改为实际版本
+npm install ./agentsphere-e2b-patch-0.1.1.tgz
 ```
+
+支持 `e2b >=2.30.0 <3`，建议使用 Node.js `20.18.1` 或更高版本。其中 `Sandbox` 和 `Template` 可用于全部支持版本；通过 `new E2B()` 创建 client 需要 `e2b >=2.44.0`，因为更早版本尚未提供官方 `E2B` client API。
 
 ## 使用
 
 使用时，必须修改 Sandbox 和 E2B 的 import！必须修改 Sandbox 和 E2B 的 import！必须修改 Sandbox 和 E2B 的 import！
 
-Sandbox 要从 agentsphere 的 patch 中 import ：
+Sandbox 要从 agentsphere 的 patch 中 import：
 
 ```ts
 import { Sandbox } from 'agentsphere-e2b-patch'
@@ -52,7 +55,34 @@ import { Sandbox } from 'e2b'
 import { E2B } from 'e2b'
 ```
 
-`Volume` / `Template` 等其它 API 仍可从 `e2b` 引入，这些管理面 API 不需要携带 traffic access token。
+使用 Agentsphere 扩展的模板构建参数时，`Template` 必须从 patch 引入：
+
+```ts
+import { Template } from 'agentsphere-e2b-patch'
+
+const template = Template().fromImage('node:22')
+
+await Template.build(template, 'my-template', {
+  arch: 'arm64',
+  gatewayID: 'gateway-id',
+  outboundNetwork: {
+    isPrivateConnect: true,
+    targetSecurityGroupIds: [],
+  },
+  invoke: {
+    protocol: 'http',
+    port: 8080,
+  },
+  ping: {
+    enabled: true,
+    path: '/health',
+  },
+})
+```
+
+`invoke` 是必填配置。`arch` 和 `gatewayID` 会加入 create template 请求；`outboundNetwork`、`invoke`、`agencies`、`ping`、`observability`、`sessionStorageConfig` 和 `storageConfig` 会加入 start build 请求。未设置 `outboundNetwork` 时会发送 `null`。`alias` 等 E2B 原生字段仍完全由原生 SDK 处理，patch 不会额外注入或改写。
+
+通过 patch 导入的 `E2B` client，其 `client.Template` 也包含这些扩展。
 
 ## 非 envd 端口
 
